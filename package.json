@@ -1,0 +1,9 @@
+{
+  "name": "nexo-bot",
+  "version": "2.0.0",
+  "description": "nexo bot - commandes gratuites, Premium, moderation, tickets, stats, anti-raid",
+  "main": "index.js",
+  "scripts": { "start": "node index.js" },
+  "engines": { "node": ">=18" },
+  "dependencies": { "discord.js": "^14.16.3", "dotenv": "^16.4.5" }
+}
