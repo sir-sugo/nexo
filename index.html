@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>nexo bot – commandes</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;600;800&display=swap">
+<style>
+:root{--bg:#f5f6fa;--panel:#fff;--ink:#16182c;--mute:#5d6280;--line:#dfe2ee;--free:#2f5bea;--prem:#9a6700;--prembg:#fff4d6;--freebg:#e8edff;--focus:#2f5bea;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#101224;--panel:#181b33;--ink:#eceefb;--mute:#9aa0c4;--line:#2a2e52;--free:#8fa8ff;--prem:#f2c45a;--prembg:#3a2f12;--freebg:#1f2650;--focus:#8fa8ff}}
+:root[data-theme="dark"]{--bg:#101224;--panel:#181b33;--ink:#eceefb;--mute:#9aa0c4;--line:#2a2e52;--free:#8fa8ff;--prem:#f2c45a;--prembg:#3a2f12;--freebg:#1f2650;--focus:#8fa8ff}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 16px/1.5 "Bricolage Grotesque",system-ui,-apple-system,"Segoe UI",sans-serif}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);background:var(--bg);z-index:10}
+header{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);padding:20px 16px 12px;border-bottom:1px solid var(--line)}
+.wrap{max-width:860px;margin:0 auto}
+h1{margin:0 0 2px;font-size:clamp(1.6rem,5vw,2.3rem);font-weight:800;letter-spacing:-.02em}
+.sub{margin:0 0 14px;color:var(--mute)}
+input[type=search]{width:100%;font:inherit;padding:12px 14px;border:1.5px solid var(--line);border-radius:10px;background:var(--panel);color:var(--ink)}
+input[type=search]::placeholder{color:var(--mute)}
+:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+.chips{display:flex;gap:8px;margin-top:10px;overflow-x:auto;padding-bottom:4px;scrollbar-width:thin}
+.chip{flex:none;font:inherit;font-size:.92rem;padding:6px 12px;border-radius:999px;border:1.5px solid var(--line);background:var(--panel);color:var(--ink);cursor:pointer}
+.chip[aria-pressed=true]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+main{padding:8px 16px 40px}
+.count{color:var(--mute);margin:10px 0}
+ul{list-style:none;margin:0;padding:0;border:1px solid var(--line);border-radius:12px;background:var(--panel);overflow:hidden}
+li{display:grid;grid-template-columns:1fr auto;gap:2px 12px;padding:12px 14px 12px 16px;border-top:1px solid var(--line);border-left:5px solid var(--free)}
+li:first-child{border-top:0}
+li.premium{border-left-color:var(--prem)}
+.name{font:600 .98rem ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;background:none;border:0;padding:0;color:var(--ink);text-align:left;cursor:pointer;overflow-wrap:anywhere}
+.args{color:var(--mute);font-weight:400}
+.d{grid-column:1/-1;margin:0;color:var(--mute)}
+.tag{font-size:.8rem;font-weight:600;padding:2px 9px;border-radius:999px;background:var(--freebg);color:var(--free);align-self:start;white-space:nowrap}
+li.premium .tag{background:var(--prembg);color:var(--prem)}
+.empty{padding:28px 16px;text-align:center;color:var(--mute)}
+.empty button{margin-top:10px}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 14px;border-radius:8px;opacity:0;pointer-events:none;transition:opacity .2s}
+.toast.on{opacity:1}
+@media (prefers-reduced-motion:reduce){.toast{transition:none}}
+</style>
+</head>
+<body>
+<header><div class="wrap">
+<h1>Commandes de nexo bot</h1>
+<p class="sub" id="sub"></p>
+<input type="search" id="q" placeholder="Chercher une commande ou un mot-clé…" aria-label="Chercher une commande" autocomplete="off">
+<div class="chips" id="tiers" role="group" aria-label="Formule"></div>
+<div class="chips" id="cats" role="group" aria-label="Catégorie"></div>
+</div></header>
+<main><div class="wrap">
+<p class="count" id="count" aria-live="polite"></p>
+<ul id="list"></ul>
+</div></main>
+<div class="toast" id="toast" role="status"></div>
+<script>
+const DATA=[{"n":"/ping","d":"Voir la latence du bot","t":"free","c":"Gratuit","a":""},{"n":"/help","d":"Liste des commandes avec recherche et filtres","t":"free","c":"Gratuit","a":"[recherche] [filtre]"},{"n":"/userinfo","d":"Infos sur un membre","t":"free","c":"Gratuit","a":"[membre]"},{"n":"/serverinfo","d":"Infos sur le serveur","t":"free","c":"Gratuit","a":""},{"n":"/avatar","d":"Afficher l’avatar d’un membre","t":"free","c":"Gratuit","a":"[membre]"},{"n":"/botinfo","d":"Infos sur nexo bot","t":"free","c":"Gratuit","a":""},{"n":"/sondage","d":"Créer un sondage (2 à 5 choix)","t":"free","c":"Gratuit","a":"<question> <choix>"},{"n":"/premium statut","d":"Voir le statut Premium du serveur","t":"free","c":"Premium","a":""},{"n":"/premium activer","d":"Activer le Premium avec une clé","t":"free","c":"Premium","a":"<cle>"},{"n":"/premium generer","d":"Générer une clé (propriétaire du bot)","t":"free","c":"Premium","a":"<jours>"},{"n":"/embed","d":"Créer un message embed personnalisé","t":"premium","c":"Premium","a":"<titre> <description> [couleur] [image] [salon]"},{"n":"/annonce","d":"Publier une annonce officielle","t":"premium","c":"Premium","a":"<message> [salon] [role]"},{"n":"/autorole","d":"Rôle donné automatiquement aux nouveaux membres","t":"premium","c":"Premium","a":"[role]"},{"n":"/bienvenue","d":"Message d’accueil automatique","t":"premium","c":"Premium","a":"[salon] [message]"},{"n":"/kick","d":"Expulser un membre","t":"free","c":"Modération","a":"<membre> [raison]"},{"n":"/ban","d":"Bannir un membre","t":"free","c":"Modération","a":"<membre> [raison] [suppr_jours]"},{"n":"/unban","d":"Débannir un utilisateur (par ID)","t":"free","c":"Modération","a":"<id>"},{"n":"/timeout","d":"Rendre muet un membre (ex : 10m, 2h, 1d)","t":"free","c":"Modération","a":"<membre> <duree> [raison]"},{"n":"/untimeout","d":"Retirer le mute d’un membre","t":"free","c":"Modération","a":"<membre>"},{"n":"/warn","d":"Avertir un membre","t":"free","c":"Modération","a":"<membre> <raison>"},{"n":"/warns","d":"Voir les avertissements d’un membre","t":"free","c":"Modération","a":"<membre>"},{"n":"/clear","d":"Supprimer des messages (1 à 100)","t":"free","c":"Modération","a":"<nombre>"},{"n":"/tempban","d":"Bannir temporairement (débannissement auto)","t":"premium","c":"Modération","a":"<membre> <duree> [raison]"},{"n":"/purge","d":"Supprimer des messages avec filtres","t":"premium","c":"Modération","a":"<nombre> [membre] [type] [contient]"},{"n":"/lock","d":"Verrouiller un salon","t":"premium","c":"Modération","a":"[salon]"},{"n":"/unlock","d":"Déverrouiller un salon","t":"premium","c":"Modération","a":"[salon]"},{"n":"/slowmode","d":"Régler le mode lent d’un salon","t":"premium","c":"Modération","a":"<secondes> [salon]"},{"n":"/automod","d":"Sanctions automatiques selon les avertissements","t":"premium","c":"Modération","a":"<mute_a> <ban_a>"},{"n":"/setup ticket","d":"Poster le panel de tickets","t":"premium","c":"Tickets","a":"<salon> <role_staff> [categorie] [logs] [image] [titre]"},{"n":"/setup logs","d":"Définir le salon des logs de modération","t":"free","c":"Tickets","a":"<salon>"},{"n":"/ticket ajouter","d":"Ajouter un membre au ticket","t":"premium","c":"Tickets","a":"<membre>"},{"n":"/ticket retirer","d":"Retirer un membre du ticket","t":"premium","c":"Tickets","a":"<membre>"},{"n":"/ticket priorite","d":"Définir la priorité","t":"premium","c":"Tickets","a":"<niveau>"},{"n":"/ticket renommer","d":"Renommer le ticket","t":"premium","c":"Tickets","a":"<nom>"},{"n":"/stats serveur","d":"Chiffres du jour et du serveur","t":"free","c":"Stats","a":""},{"n":"/stats membre","d":"Messages envoyés par un membre","t":"free","c":"Stats","a":"[membre]"},{"n":"/classement","d":"Top 10 des membres les plus actifs","t":"premium","c":"Stats","a":""},{"n":"/activite","d":"Activité des 7 derniers jours","t":"premium","c":"Stats","a":""},{"n":"/antiraid statut","d":"Voir la configuration actuelle","t":"free","c":"Sécurité","a":""},{"n":"/antiraid activer","d":"Activer la protection","t":"free","c":"Sécurité","a":""},{"n":"/antiraid desactiver","d":"Désactiver la protection","t":"free","c":"Sécurité","a":""},{"n":"/antiraid configurer","d":"Régler seuils, âge minimum, anti-spam et anti-liens","t":"premium","c":"Sécurité","a":"[seuil] [fenetre] [age_min] [action] [anti_spam] [anti_liens]"},{"n":"/lockdown","d":"Urgence : verrouiller tous les salons textuels","t":"free","c":"Sécurité","a":"<etat>"}];
+const norm=s=>s.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
+const S={q:"",tier:"all",cat:"all"};
+const $=id=>document.getElementById(id);
+const TIERS=[["all","Toutes"],["free","🆓 Gratuit"],["premium","💎 Premium"]];
+const CATS=["all",...new Set(DATA.map(c=>c.c))];
+function chips(el,items,key){
+  el.innerHTML="";
+  for(const [v,l] of items){const b=document.createElement("button");b.className="chip";b.textContent=l;b.setAttribute("aria-pressed",S[key]===v);b.onclick=()=>{S[key]=v;draw()};el.append(b)}
+}
+function draw(){
+  chips($("tiers"),TIERS,"tier");
+  chips($("cats"),CATS.map(c=>[c,c==="all"?"Toutes catégories":c]),"cat");
+  const q=norm(S.q.trim());
+  const rows=DATA.filter(c=>(S.tier==="all"||c.t===S.tier)&&(S.cat==="all"||c.c===S.cat)&&(!q||norm(c.n+" "+c.d+" "+c.a+" "+c.c).includes(q)));
+  $("count").textContent=rows.length+" commande"+(rows.length>1?"s":"");
+  const ul=$("list");ul.innerHTML="";
+  if(!rows.length){ul.innerHTML='<li class="empty" style="display:block;border-left:0"><div>Aucune commande ne correspond. Essaie un autre mot ou retire un filtre.</div><button class="chip" id="reset">Tout afficher</button></li>';$("reset").onclick=()=>{S.q="";S.tier="all";S.cat="all";$("q").value="";draw()};return}
+  for(const c of rows){
+    const li=document.createElement("li");li.className=c.t;
+    li.innerHTML='<button class="name" title="Copier la commande"></button><span class="tag"></span><p class="d"></p>';
+    li.querySelector(".name").innerHTML=c.n.replace(/</g,"&lt;")+(c.a?' <span class="args"></span>':"");
+    if(c.a)li.querySelector(".args").textContent=c.a;
+    li.querySelector(".tag").textContent=c.t==="premium"?"💎 Premium":"🆓 Gratuit";
+    li.querySelector(".d").textContent=c.d;
+    li.querySelector(".name").onclick=()=>{navigator.clipboard?.writeText(c.n).catch(()=>{});const t=$("toast");t.textContent=c.n+" copiée";t.classList.add("on");setTimeout(()=>t.classList.remove("on"),1400)};
+    ul.append(li);
+  }
+}
+$("sub").textContent=DATA.length+" commandes · "+DATA.filter(c=>c.t==="premium").length+" Premium. Touche un nom pour le copier.";
+$("q").oninput=e=>{S.q=e.target.value;draw()};
+draw();
+</script>
+</body>
+</html>
